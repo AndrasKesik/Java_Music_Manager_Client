@@ -1,8 +1,9 @@
 package Network;
 
+import common.Command;
 import java.io.*;
 import java.net.Socket;
-import java.util.List;
+import java.util.*;
 
 public class FTVL {
     Socket socket;
@@ -11,15 +12,24 @@ public class FTVL {
 
     String newFolder;
 
+    ObjectOutputStream oos;
+
     public FTVL(String host, int port) {
         this.port = port;
         this.host = host;
+        try {
+            socket = new Socket(host,port);
+            oos = new ObjectOutputStream(socket.getOutputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     public void createM3U() {
         try {
             socket = new Socket(host, port);
-            System.out.println("createM3U onnected to: " + socket.getInetAddress());
+            System.out.println("createM3U connected to: " + socket.getInetAddress());
             ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
             oos.writeObject(Command.CREATE);
 
@@ -39,22 +49,21 @@ public class FTVL {
             ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
             oos.writeObject(Command.READ); // Send command to server
             BufferedReader fileIn = new BufferedReader(new FileReader(file)); // File reader
-            String line = fileIn.readLine(); // Actual line in file
 
-            while (line != null) { //Read from line to line, until an empty line
-                m3uContent += line + "\n"; // Add line and linebreak to m3uContent string
-                line = fileIn.readLine(); // Go to next line
-
+            String line; // Actual line in file
+            PrintWriter printWriter = new PrintWriter(socket.getOutputStream());
+            while ((line = fileIn.readLine()) != null) { //Read from line to line, until an empty line
+                printWriter.println(line);
             }
+
             fileIn.close();
 
-            PrintWriter printWriter = new PrintWriter(socket.getOutputStream());
-            printWriter.print(m3uContent);  // Send string to server
-            printWriter.close();
+
+             // Send string to server
+
 
 //            ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 //            fileList = (List)ois.readObject(); // Hogy csinálok readObjectből listát? Valaki pls?
-
 
 
             socket.close();
@@ -80,10 +89,10 @@ public class FTVL {
                 System.out.println("Unkown file, please choose a real mp3");
                 return;}
 
-            socket = new Socket(host, port);
-            System.out.println("splitMP3 Connected to: " + socket.getInetAddress());
+//            socket = new Socket(host, port);
+//            System.out.println("splitMP3 Connected to: " + socket.getInetAddress());
 
-            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+//            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
             oos.writeObject(Command.SPLIT);
             sendFile(file, parts);
 
@@ -107,17 +116,28 @@ public class FTVL {
     private void sendFile(File file,int parts) {
         try {
             ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-            oos.write(parts);
+            oos.writeObject(parts);
             oos.writeObject(file);
+            oos.writeObject(file.length());
 
             DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
             FileInputStream fis = new FileInputStream(file);
             byte[] buffer = new byte[4096];
-            while (fis.read(buffer) > 0) {
-                dos.write(buffer);
+            int read;
+            long remaining = file.length();
+            while ((read = fis.read(buffer, 0, Math.min(buffer.length, (int) remaining))) > 0) {
+                remaining -= read;
+                dos.write(buffer, 0, read);
             }
-//            oos.close();
-//            socket.close();
+//            fos.close();
+//            dis.close();
+//            ois.close();
+//
+//            while (fis.read(buffer) > 0) {
+//                dos.write(buffer);
+//            }
+////            oos.close();
+////            socket.close();
         } catch (IOException e) {
             System.err.println("sendFile");
         }
@@ -128,12 +148,13 @@ public class FTVL {
         try {
             ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
             file = (File) ois.readObject();
+            long fileSize = (long)ois.readObject();
 
             DataInputStream dis = new DataInputStream(socket.getInputStream());
             FileOutputStream fos = new FileOutputStream(newFolder+File.separator+file.getName());
             byte[] buffer = new byte[4096];
             int read;
-            long remaining = file.length();
+            long remaining = fileSize;
             while ((read = dis.read(buffer, 0, Math.min(buffer.length, (int) remaining))) > 0) {
                 remaining -= read;
                 fos.write(buffer, 0, read);
