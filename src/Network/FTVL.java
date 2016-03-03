@@ -75,6 +75,7 @@ public class FTVL {
             oos.writeObject(m3uContent);  // Send string to server (?) Not sure.
             ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
             fileList = (List) ois.readObject(); // Read objects and create a file list.
+            System.out.println(fileList);
 
         } catch (Exception e) {
             e.printStackTrace();
