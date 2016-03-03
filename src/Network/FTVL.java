@@ -11,7 +11,8 @@ public class FTVL {
     String host;
 
     String newFolder;
-
+    OutputStream socketOut;
+    InputStream socketIn;
     ObjectOutputStream oos;
 
     public FTVL(String host, int port) {
@@ -19,7 +20,9 @@ public class FTVL {
         this.host = host;
         try {
             socket = new Socket(host,port);
-            oos = new ObjectOutputStream(socket.getOutputStream());
+            socketOut = socket.getOutputStream();
+            socketIn = socket.getInputStream();
+            oos = new ObjectOutputStream(socketOut);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -28,14 +31,11 @@ public class FTVL {
 
     public void createM3U() {
         try {
-            socket = new Socket(host, port);
-            System.out.println("createM3U connected to: " + socket.getInetAddress());
-            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+
+            oos.write(0);
             oos.writeObject(Command.CREATE);
+//            oos.writeObject(fileList);
 
-
-            socket.close();
-            oos.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -45,18 +45,18 @@ public class FTVL {
         String m3uContent = "";
         List<File> fileList = null;
         try {
-            Socket socket = new Socket("localhost", 4444);
-            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+//            Socket socket = new Socket("localhost", 4444);
+            oos.write(0);
             oos.writeObject(Command.READ); // Send command to server
-            BufferedReader fileIn = new BufferedReader(new FileReader(file)); // File reader
-
-            String line; // Actual line in file
-            PrintWriter printWriter = new PrintWriter(socket.getOutputStream());
-            while ((line = fileIn.readLine()) != null) { //Read from line to line, until an empty line
-                printWriter.println(line);
-            }
-
-            fileIn.close();
+////            BufferedReader fileIn = new BufferedReader(new FileReader(file)); // File reader
+////
+//            String line; // Actual line in file
+//            PrintWriter printWriter = new PrintWriter(socket.getOutputStream());
+//            while ((line = fileIn.readLine()) != null) { //Read from line to line, until an empty line
+//                printWriter.println(line);
+//            }
+////
+////            fileIn.close();
 
 
              // Send string to server
@@ -65,21 +65,10 @@ public class FTVL {
 //            ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 //            fileList = (List)ois.readObject(); // Hogy csinálok readObjectből listát? Valaki pls?
 
-
-            socket.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        /*
-        / küldje át a szerverhez a read enumot - PIPA
-        / megkapja a fájlt - PIPA
-        / beolvassa Stringnek - PIPA
-        / átküldi a szervernek - PIPA
 
-        / serverből listát kap - PIPA
-        / kiolvassa - PIPA
-        / visszaadja
-        */
         return fileList;
     }
 
@@ -89,10 +78,7 @@ public class FTVL {
                 System.out.println("Unkown file, please choose a real mp3");
                 return;}
 
-//            socket = new Socket(host, port);
-//            System.out.println("splitMP3 Connected to: " + socket.getInetAddress());
-
-//            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+            oos.write(0);
             oos.writeObject(Command.SPLIT);
             sendFile(file, parts);
 
@@ -103,8 +89,6 @@ public class FTVL {
                 saveFile();
             }
 
-//            oos.close();
-//            socket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -115,12 +99,12 @@ public class FTVL {
 
     private void sendFile(File file,int parts) {
         try {
-            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+            ObjectOutputStream oos = new ObjectOutputStream(socketOut);
             oos.writeObject(parts);
             oos.writeObject(file);
             oos.writeObject(file.length());
 
-            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+            DataOutputStream dos = new DataOutputStream(socketOut);
             FileInputStream fis = new FileInputStream(file);
             byte[] buffer = new byte[4096];
             int read;
@@ -129,15 +113,7 @@ public class FTVL {
                 remaining -= read;
                 dos.write(buffer, 0, read);
             }
-//            fos.close();
-//            dis.close();
-//            ois.close();
-//
-//            while (fis.read(buffer) > 0) {
-//                dos.write(buffer);
-//            }
-////            oos.close();
-////            socket.close();
+
         } catch (IOException e) {
             System.err.println("sendFile");
         }
@@ -146,11 +122,11 @@ public class FTVL {
     private void saveFile() {
         File file;
         try {
-            ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+            ObjectInputStream ois = new ObjectInputStream(socketIn);
             file = (File) ois.readObject();
             long fileSize = (long)ois.readObject();
 
-            DataInputStream dis = new DataInputStream(socket.getInputStream());
+            DataInputStream dis = new DataInputStream(socketIn);
             FileOutputStream fos = new FileOutputStream(newFolder+File.separator+file.getName());
             byte[] buffer = new byte[4096];
             int read;
@@ -159,12 +135,10 @@ public class FTVL {
                 remaining -= read;
                 fos.write(buffer, 0, read);
             }
-//            fos.close();
-//            dis.close();
-//            ois.close();
+
         } catch (Exception e) {
-//            System.out.println("File save error");    ///STREAM HEADER-ÖK NEM EGYEZNEK, HOGY TUDOM MEGCSINÁLNI HOGY EGYEZZENEK?
-//            e.printStackTrace();
+            System.out.println("File save error");
+            e.printStackTrace();
         }
     }
 
