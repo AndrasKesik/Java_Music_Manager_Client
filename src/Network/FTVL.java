@@ -48,8 +48,6 @@ public class FTVL {
         try {
             oos.write(0);
             oos.writeObject(Command.READ); // Send command to server
-
-            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
             BufferedReader fileIn = new BufferedReader(new FileReader(file)); // File reader
 
             String line = fileIn.readLine(); // Actual line in file
@@ -59,7 +57,7 @@ public class FTVL {
             }
             fileIn.close();
 
-            oos.writeBytes(m3uContent);  // Send string to server (?) Not sure.
+            oos.writeObject(m3uContent);  // Send string to server (?) Not sure.
             ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
             fileList = (List) ois.readObject(); // Read objects and create a file list.
 
