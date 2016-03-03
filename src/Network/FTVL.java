@@ -45,25 +45,26 @@ public class FTVL {
         String m3uContent = "";
         List<File> fileList = null;
         try {
-//            Socket socket = new Socket("localhost", 4444);
             oos.write(0);
             oos.writeObject(Command.READ); // Send command to server
-////            BufferedReader fileIn = new BufferedReader(new FileReader(file)); // File reader
-////
-//            String line; // Actual line in file
-//            PrintWriter printWriter = new PrintWriter(socket.getOutputStream());
-//            while ((line = fileIn.readLine()) != null) { //Read from line to line, until an empty line
-//                printWriter.println(line);
-//            }
-////
-////            fileIn.close();
+
+            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+            BufferedReader fileIn = new BufferedReader(new FileReader(file)); // File reader
+
+            String line = fileIn.readLine(); // Actual line in file
+            while (line != null) { //Read from line to line, until an empty line
+               m3uContent += line + "\n"; // Add line and linebreak to m3uContent string
+               line = fileIn.readLine(); // Go to next line
+            }
+            fileIn.close();
+
+            oos.writeBytes(m3uContent);  // Send string to server (?) Not sure.
+            ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+            ois.readObject();
+            // Hogy csinálok readObjectből listát? Valaki pls?
 
 
-             // Send string to server
 
-
-//            ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-//            fileList = (List)ois.readObject(); // Hogy csinálok readObjectből listát? Valaki pls?
 
         } catch (Exception e) {
             e.printStackTrace();
