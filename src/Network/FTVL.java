@@ -29,16 +29,31 @@ public class FTVL {
 
     }
 
-    public void createM3U() {
+    public void disconnectClient(){
         try {
-
             oos.write(0);
-            oos.writeObject(Command.CREATE);
-//            oos.writeObject(fileList);
-
+            oos.writeObject(Command.EXIT);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public File createM3U(List<File> fileList, String resultFile) {
+        try {
+            oos.write(0);
+            oos.writeObject(Command.CREATE);
+            oos.writeObject(fileList);
+            ObjectInputStream ois = new ObjectInputStream(socketIn);
+            String m3uContent = (String) ois.readObject();
+
+            FileWriter fileWriter = new FileWriter(resultFile);
+            fileWriter.write(m3uContent);
+            fileWriter.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new File(resultFile);
     }
 
     public List<File> readM3U(File file) {
@@ -48,21 +63,21 @@ public class FTVL {
             oos.write(0);
             oos.writeObject(Command.READ); // Send command to server
 
-            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-            BufferedReader fileIn = new BufferedReader(new FileReader(file)); // File reader
-
-            String line = fileIn.readLine(); // Actual line in file
-            while (line != null) { //Read from line to line, until an empty line
-               m3uContent += line + "\n"; // Add line and linebreak to m3uContent string
-               line = fileIn.readLine(); // Go to next line
-            }
-            fileIn.close();
-
-            oos.writeBytes(m3uContent);  // Send string to server (?) Not sure.
-            ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-            ois.readObject();
-            // Hogy csinálok readObjectből listát? Valaki pls?
-
+//            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+//            BufferedReader fileIn = new BufferedReader(new FileReader(file)); // File reader
+//
+//            String line = fileIn.readLine(); // Actual line in file
+//            while (line != null) { //Read from line to line, until an empty line
+//               m3uContent += line + "\n"; // Add line and linebreak to m3uContent string
+//               line = fileIn.readLine(); // Go to next line
+//            }
+//            fileIn.close();
+//
+//            oos.writeBytes(m3uContent);  // Send string to server (?) Not sure.
+//            ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+//            ois.readObject();
+//            // Hogy csinálok readObjectből listát? Valaki pls?
+//
 
 
 
@@ -93,8 +108,6 @@ public class FTVL {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
 
 
