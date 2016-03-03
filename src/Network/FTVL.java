@@ -31,6 +31,7 @@ public class FTVL {
 
     public void disconnectClient(){
         try {
+
             oos.write(0);
             oos.writeObject(Command.EXIT);
         } catch (IOException e) {
@@ -62,24 +63,18 @@ public class FTVL {
         try {
             oos.write(0);
             oos.writeObject(Command.READ); // Send command to server
+            BufferedReader fileIn = new BufferedReader(new FileReader(file)); // File reader
 
-//            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-//            BufferedReader fileIn = new BufferedReader(new FileReader(file)); // File reader
-//
-//            String line = fileIn.readLine(); // Actual line in file
-//            while (line != null) { //Read from line to line, until an empty line
-//               m3uContent += line + "\n"; // Add line and linebreak to m3uContent string
-//               line = fileIn.readLine(); // Go to next line
-//            }
-//            fileIn.close();
-//
-//            oos.writeBytes(m3uContent);  // Send string to server (?) Not sure.
-//            ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-//            ois.readObject();
-//            // Hogy csinálok readObjectből listát? Valaki pls?
-//
+            String line = fileIn.readLine(); // Actual line in file
+            while (line != null) { //Read from line to line, until an empty line
+                m3uContent += line + "\n"; // Add line and linebreak to m3uContent string
+                line = fileIn.readLine(); // Go to next line
+            }
+            fileIn.close();
 
-
+            oos.writeObject(m3uContent);  // Send string to server (?) Not sure.
+            ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+            fileList = (List) ois.readObject(); // Read objects and create a file list.
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -108,6 +103,8 @@ public class FTVL {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+
     }
 
 
