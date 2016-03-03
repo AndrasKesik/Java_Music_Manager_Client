@@ -1,6 +1,7 @@
 package Network;
 
 import common.Command;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
@@ -19,7 +20,7 @@ public class FTVL {
         this.port = port;
         this.host = host;
         try {
-            socket = new Socket(host,port);
+            socket = new Socket(host, port);
             socketOut = socket.getOutputStream();
             socketIn = socket.getInputStream();
             oos = new ObjectOutputStream(socketOut);
@@ -53,18 +54,14 @@ public class FTVL {
 
             String line = fileIn.readLine(); // Actual line in file
             while (line != null) { //Read from line to line, until an empty line
-               m3uContent += line + "\n"; // Add line and linebreak to m3uContent string
-               line = fileIn.readLine(); // Go to next line
+                m3uContent += line + "\n"; // Add line and linebreak to m3uContent string
+                line = fileIn.readLine(); // Go to next line
             }
             fileIn.close();
 
             oos.writeBytes(m3uContent);  // Send string to server (?) Not sure.
             ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-            ois.readObject();
-            // Hogy csinálok readObjectből listát? Valaki pls?
-
-
-
+            fileList = (List) ois.readObject(); // Read objects and create a file list.
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -75,18 +72,19 @@ public class FTVL {
 
     public void splitMP3(File file, int parts) {
         try {
-            if(!file.exists() || !file.getName().endsWith(".mp3")){
+            if (!file.exists() || !file.getName().endsWith(".mp3")) {
                 System.out.println("Unkown file, please choose a real mp3");
-                return;}
+                return;
+            }
 
             oos.write(0);
             oos.writeObject(Command.SPLIT);
             sendFile(file, parts);
 
-            if(!makeDirectory(file, parts)){
+            if (!makeDirectory(file, parts)) {
                 System.out.println("Directory already exists");
             }
-            for(int i =0;i<parts;i++){
+            for (int i = 0; i < parts; i++) {
                 saveFile();
             }
 
@@ -98,7 +96,7 @@ public class FTVL {
     }
 
 
-    private void sendFile(File file,int parts) {
+    private void sendFile(File file, int parts) {
         try {
             ObjectOutputStream oos = new ObjectOutputStream(socketOut);
             oos.writeObject(parts);
@@ -125,10 +123,10 @@ public class FTVL {
         try {
             ObjectInputStream ois = new ObjectInputStream(socketIn);
             file = (File) ois.readObject();
-            long fileSize = (long)ois.readObject();
+            long fileSize = (long) ois.readObject();
 
             DataInputStream dis = new DataInputStream(socketIn);
-            FileOutputStream fos = new FileOutputStream(newFolder+File.separator+file.getName());
+            FileOutputStream fos = new FileOutputStream(newFolder + File.separator + file.getName());
             byte[] buffer = new byte[4096];
             int read;
             long remaining = fileSize;
@@ -143,10 +141,10 @@ public class FTVL {
         }
     }
 
-    private boolean makeDirectory(File file, int parts){
-        String name = file.getName().substring(0,file.getName().length()-4);
+    private boolean makeDirectory(File file, int parts) {
+        String name = file.getName().substring(0, file.getName().length() - 4);
         String dirName = name + "_" + parts;
-        newFolder = file.getParent()+"\\"+dirName;
+        newFolder = file.getParent() + "\\" + dirName;
         File dir = new File(newFolder);
         return dir.mkdir();
     }
